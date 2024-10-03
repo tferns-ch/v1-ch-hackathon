@@ -9,6 +9,7 @@ A tool to evaluate GitHub README files against custom standards, created during 
 4. [Setup](#setup)
 5. [Usage](#usage)
 6. [Implementation Notes](#implementation-notes)
+7. [Screenshot of the UI](#screenshot-of-the-ui)
 
 ## Team
 
@@ -83,3 +84,8 @@ README-Evaluator-Snowy/
 - Alternative models (Claude, GPT-4) are stubbed out in the code but not implemented. You can extend these functions if privacy concerns are not an issue.
 - The frontend is built using GOV.UK Design System for a clean, accessible interface.
 - The application is currently set up for local development and testing. Additional configuration would be needed for production deployment.
+
+## Screenshot of the UI
+
+<img width="1289" alt="README Evaluator - Team Snowy" src="https://github.com/user-attachments/assets/4b66964d-1fc5-4ba6-bb3c-4d6e9a22e8b8">
+
