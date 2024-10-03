@@ -42,7 +42,7 @@ README-Evaluator-Snowy/
 
 ## Setup
 
-1. Ensure you have Python 3.9.6 installed..
+1. Ensure you have Python 3.9.6 installed.
 
 2. Create and activate a virtual environment:
    ```
