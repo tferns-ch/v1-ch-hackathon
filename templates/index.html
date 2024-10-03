@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en" class="govuk-template">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>README Evaluator - Snowy</title>
+  <!-- using jsdelivr because it's a hackathon.  usually wouldn't. -->
+  <link href="https://cdn.jsdelivr.net/npm/govuk-frontend@5.6.0/dist/govuk/govuk-frontend.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/govuk-frontend@5.6.0/dist/govuk/all.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    body { background-color: #f3f2f1; margin: 0; padding: 20px; font-family: "GDS Transport", arial, sans-serif; }
+    .app-container { max-width: 1200px; margin: 0 auto; padding: 30px; background-color: #ffffff; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); display: grid; grid-template-columns: 1fr 1fr; grid-gap: 30px; border-radius: 5px; }
+    .app-header { grid-column: 1 / -1; margin-bottom: 30px; border-bottom: 2px solid #1d70b8; padding-bottom: 20px; }
+    .app-header__title { margin: 0; color: #1d70b8; }
+    .input-section { display: flex; flex-direction: column; }
+    .govuk-textarea { height: 200px; border: 2px solid #0b0c0c; }
+    #result { grid-column: 1 / -1; background-color: #f8f8f8; padding: 20px; border-radius: 5px; border: 2px solid #1d70b8; font-size: 16px; line-height: 1.5; color: #0b0c0c; max-height: 300px; overflow-y: auto; position: relative; }
+    #result h1, #result h2, #result h3, #result h4, #result h5, #result h6 { margin-top: 20px; margin-bottom: 10px; font-weight: 600; line-height: 1.25; color: #1d70b8; }
+    #result h1 { font-size: 1.5em; } #result h2 { font-size: 1.3em; } #result h3 { font-size: 1.1em; }
+    #result p, #result ul, #result ol { margin-bottom: 15px; }
+    #result ul, #result ol { padding-left: 25px; }
+    #result li { margin-bottom: 5px; }
+    #result code { padding: 0.2em 0.4em; margin: 0; font-size: 85%; background-color: rgba(27,31,35,0.05); border-radius: 3px; }
+    #result pre { padding: 15px; overflow: auto; font-size: 85%; line-height: 1.45; background-color: #f6f8fa; border-radius: 3px; border: 1px solid #e1e4e8; }
+    .expand-button { position: absolute; top: 10px; right: 10px; background: #1d70b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; }
+    .modal { display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); }
+    .modal-content { background-color: #fefefe; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 1000px; border-radius: 5px; }
+    .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+  </style>
+</head>
+<body class="govuk-template__body">
+<div class="app-container">
+  <header class="app-header"><h1 class="govuk-heading-l app-header__title">README Evaluator - Snowy</h1></header>
+  <div class="input-section">
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="readmeInput">Paste your README content here</label>
+      <textarea class="govuk-textarea" id="readmeInput"></textarea>
+    </div>
+    <button class="govuk-button" data-module="govuk-button" onclick="evaluateReadme()">Get Feedback</button>
+  </div>
+  <div class="input-section">
+    <div class="govuk-form-group">
+      <label class="govuk-label" for="standardsInput">README Standards</label>
+      <textarea class="govuk-textarea" id="standardsInput"></textarea>
+    </div>
+    <button class="govuk-button govuk-button--secondary" data-module="govuk-button" onclick="resetStandards()">Reset to Default</button>
+  </div>
+  <div id="result" class="govuk-body"><button class="expand-button" onclick="openModal()">Expand</button></div>
+</div>
+<div id="feedbackModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <div id="modalContent"></div>
+  </div>
+</div>
+<script>
+  const defaultStandards = `For every repo, the ReadMe should include:
+
+1. What does it do
+2. How do I build it
+3. How do I run it
+4. Links to further information like Confluence pages for architecture or HLD
+5. Other useful information, for example Troubleshooting
+
+Also, the following should be included where appropriate:
+- Sub-ReadMes in sub-directories where required. Always link any sub-ReadMes from the top-level ReadMe.
+- Subordinate READMEs for DB, KAFKA, and CURL in service repos with appropriate content for DB, Kafka, and curl command examples.
+
+GFM styleguide:
+- Use code blocks where appropriate.
+- If the ReadMe is more than one screen long, split into sections and use headers.`;
+
+  let currentStandards = defaultStandards;
+
+  function evaluateReadme() {
+    const readme = document.getElementById('readmeInput').value;
+    const resultDiv = document.getElementById('result');
+    resultDiv.innerHTML = 'Evaluating... <button class="expand-button" onclick="openModal()">Expand</button>';
+    currentStandards = document.getElementById('standardsInput').value;
+    fetch('/evaluate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ readme, customPrompt: currentStandards }),
+    })
+    .then(response => response.json())
+    .then(data => {
+      const parsedResult = marked.parse(data.result);
+      resultDiv.innerHTML = parsedResult + '<button class="expand-button" onclick="openModal()">Expand</button>';
+      document.getElementById('modalContent').innerHTML = parsedResult;
+    })
+    .catch(error => { resultDiv.textContent = 'Error: ' + error.message; });
+  }
+
+  function resetStandards() {
+    document.getElementById('standardsInput').value = defaultStandards;
+    currentStandards = defaultStandards;
+  }
+
+  function openModal() { document.getElementById('feedbackModal').style.display = 'block'; }
+  function closeModal() { document.getElementById('feedbackModal').style.display = 'none'; }
+
+  window.onclick = function(event) {
+    if (event.target == document.getElementById('feedbackModal')) closeModal();
+  }
+
+  window.addEventListener('load', function() {
+    document.getElementById('readmeInput').value = "Paste your README content here";
+    document.getElementById('standardsInput').value = defaultStandards;
+    window.GOVUKFrontend.initAll();
+  });
+</script>
+</body>
+</html>
