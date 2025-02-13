@@ -1,6 +1,8 @@
 # README Evaluator - Snowy
 
-A tool to evaluate GitHub README files against custom standards, created during the Companies House Hackathon by **Team Snowy**.
+A tool to evaluate GitHub README files against custom standards.
+
+Built by **Team Snowy** during Companies House's in-person hackathon at their Cardiff office, October 1-2, 2024.
 
 ## Table of Contents
 1. [Team](#team)
